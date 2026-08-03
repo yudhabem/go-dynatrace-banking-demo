@@ -6,6 +6,7 @@ import (
 
 	"github.com/google/uuid"
 
+	"github.com/yudhabem/go-dynatrace-banking-demo/banking-api/internal/dto"
 	"github.com/yudhabem/go-dynatrace-banking-demo/banking-api/internal/model"
 	"github.com/yudhabem/go-dynatrace-banking-demo/banking-api/internal/repository"
 )
@@ -50,4 +51,19 @@ func (s *UserService) CreateRandomUser() (*model.Customer, *model.Account, error
 
 func (s *UserService) GetAllUsers() ([]model.Customer, error) {
 	return s.repo.GetCustomers()
+}
+
+func (s *UserService) RandomLogin() (*dto.LoginResponse, error) {
+
+	customer, account, err := s.repo.GetRandomUser()
+	if err != nil {
+		return nil, err
+	}
+
+	return &dto.LoginResponse{
+		CustomerID:    customer.CustomerID,
+		Name:          customer.Name,
+		AccountNumber: account.AccountNumber,
+		Balance:       account.Balance,
+	}, nil
 }

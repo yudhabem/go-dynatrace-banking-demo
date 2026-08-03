@@ -57,3 +57,23 @@ func (h *UserHandler) GetAll(c *gin.Context) {
 		"data":    users,
 	})
 }
+
+func (h *UserHandler) Login(c *gin.Context) {
+
+	resp, err := h.service.RandomLogin()
+
+	if err != nil {
+
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"success": false,
+			"message": err.Error(),
+		})
+
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"data":    resp,
+	})
+}

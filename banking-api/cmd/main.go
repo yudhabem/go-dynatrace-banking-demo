@@ -47,9 +47,16 @@ func main() {
 
 	transferHandler := handler.NewTransferHandler(transferService)
 
+	paymentRepo := repository.NewPaymentRepository(db)
+
+	paymentService := service.NewPaymentService(paymentRepo)
+
+	paymentHandler := handler.NewPaymentHandler(paymentService)
+
 	r := router.New(
 		userHandler,
 		transferHandler,
+		paymentHandler,
 	)
 
 	logg.Info("Gateway started")

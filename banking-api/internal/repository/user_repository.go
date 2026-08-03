@@ -31,3 +31,28 @@ func (r *UserRepository) GetCustomers() ([]model.Customer, error) {
 
 	return customers, err
 }
+
+func (r *UserRepository) GetRandomUser() (*model.Customer, *model.Account, error) {
+
+	var customer model.Customer
+
+	err := r.db.
+		Order("RANDOM()").
+		First(&customer).Error
+
+	if err != nil {
+		return nil, nil, err
+	}
+
+	var account model.Account
+
+	err = r.db.
+		Where("customer_id = ?", customer.CustomerID).
+		First(&account).Error
+
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return &customer, &account, nil
+}

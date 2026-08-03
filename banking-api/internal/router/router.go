@@ -10,6 +10,7 @@ import (
 func New(
 	userHandler *handler.UserHandler,
 	transferHandler *handler.TransferHandler,
+	paymentHandler *handler.PaymentHandler,
 ) *gin.Engine {
 
 	r := gin.Default()
@@ -21,11 +22,15 @@ func New(
 	r.POST("/users/random", userHandler.Random)
 	r.GET("/users", userHandler.GetAll)
 
+	r.POST("/login/random", userHandler.Login)
+
 	r.POST("/transfer", transferHandler.Transfer)
 
 	// Tambahkan dua route ini
 	r.GET("/accounts/:account", transferHandler.Inquiry)
 	r.GET("/transactions", transferHandler.History)
+
+	r.POST("/payment", paymentHandler.Payment)
 
 	return r
 }
