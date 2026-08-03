@@ -1,0 +1,35 @@
+version: "3.9"
+
+services:
+
+  postgres:
+    image: postgres:17
+    container_name: banking-postgres
+
+    environment:
+      POSTGRES_USER: banking
+      POSTGRES_PASSWORD: banking
+      POSTGRES_DB: banking
+
+    ports:
+      - "5432:5432"
+
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
+
+  gateway:
+    build:
+      context: .
+      dockerfile: gateway/Dockerfile
+
+    container_name: api-gateway
+
+    ports:
+      - "8080:8080"
+
+    depends_on:
+      - postgres
+
+volumes:
+  postgres-data:
