@@ -1,21 +1,31 @@
 package main
 
 import (
-	"net/http"
+	"log"
 
-	"github.com/gin-gonic/gin"
+	"github.com/yudhabem/go-dynatrace-banking-demo/gateway/internal/config"
+	"github.com/yudhabem/go-dynatrace-banking-demo/gateway/internal/database"
+	"github.com/yudhabem/go-dynatrace-banking-demo/gateway/internal/logger"
+	"github.com/yudhabem/go-dynatrace-banking-demo/gateway/internal/router"
 )
 
 func main() {
-	r := gin.Default()
 
-	r.GET("/health", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{
-			"status": "UP",
-			"service": "api-gateway",
-			"version": "1.0.0",
-		})
-	})
+	cfg := config.Load()
 
-	r.Run(":8080")
+	logg := logger.New()
+	defer logg.Sync()
+
+	_, err := database.Connect(cfg)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	r := router.New()
+
+	logg.Info("Gateway started")
+
+	if err := r.Run(":" + cfg.AppPort); err != nil {
+		log.Fatal(err)
+	}
 }
