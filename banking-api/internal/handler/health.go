@@ -3,7 +3,7 @@ package handler
 import (
 	"github.com/gin-gonic/gin"
 
-	"github.com/yudhabem/go-dynatrace-banking-demo/gateway/internal/response"
+	"github.com/yudhabem/go-dynatrace-banking-demo/banking-api/internal/response"
 )
 
 func Health(c *gin.Context) {

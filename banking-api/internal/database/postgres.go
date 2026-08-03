@@ -3,7 +3,7 @@ package database
 import (
 	"fmt"
 
-	"github.com/yudhabem/go-dynatrace-banking-demo/gateway/internal/config"
+	"github.com/yudhabem/go-dynatrace-banking-demo/banking-api/internal/config"
 
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"

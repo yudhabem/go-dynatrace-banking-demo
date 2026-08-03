@@ -6,7 +6,7 @@ COPY . .
 
 RUN go mod download
 
-WORKDIR /app/gateway
+WORKDIR /app/banking-api
 
 RUN go build -o gateway ./cmd
 
