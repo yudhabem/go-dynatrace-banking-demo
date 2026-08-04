@@ -33,7 +33,7 @@ func (h *PaymentHandler) Payment(c *gin.Context) {
 		return
 	}
 
-	id, err := h.service.Payment(req)
+	id, err := h.service.Payment(c.Request.Context(), req)
 	if err != nil {
 
 		c.JSON(http.StatusBadRequest, gin.H{

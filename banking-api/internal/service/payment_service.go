@@ -1,10 +1,15 @@
 package service
 
 import (
+	"context"
 	"errors"
 	"fmt"
 
 	"github.com/google/uuid"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/zap"
 
 	"github.com/yudhabem/go-dynatrace-banking-demo/banking-api/internal/dto"
@@ -23,7 +28,19 @@ func NewPaymentService(repo *repository.PaymentRepository) *PaymentService {
 	}
 }
 
-func (s *PaymentService) Payment(req dto.PaymentRequest) (string, error) {
+func (s *PaymentService) Payment(ctx context.Context, req dto.PaymentRequest) (string, error) {
+	transactionID := fmt.Sprintf("PAY-%s", uuid.New().String()[:8])
+	ctx, span := otel.Tracer("banking-api/service").Start(ctx, "banking.payment",
+		trace.WithAttributes(
+			attribute.String("banking.operation", "payment"),
+			attribute.String("banking.transaction.id", transactionID),
+			attribute.String("banking.account.id", req.AccountNumber),
+			attribute.String("banking.payment.merchant", req.Merchant),
+			attribute.Float64("banking.transaction.amount", req.Amount),
+		),
+	)
+	defer span.End()
+
 	logger.Log.Info(
 		"payment started",
 		zap.String("account", req.AccountNumber),
@@ -31,8 +48,10 @@ func (s *PaymentService) Payment(req dto.PaymentRequest) (string, error) {
 		zap.Float64("amount", req.Amount),
 	)
 
-	account, err := s.repo.GetAccount(req.AccountNumber)
+	account, err := s.repo.GetAccount(ctx, req.AccountNumber)
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, "payment account not found")
 		logger.Log.Error(
 			"payment account not found",
 			zap.String("account", req.AccountNumber),
@@ -49,6 +68,9 @@ func (s *PaymentService) Payment(req dto.PaymentRequest) (string, error) {
 	)
 
 	if account.Balance < req.Amount {
+		err := errors.New("insufficient balance")
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
 		logger.Log.Warn(
 			"insufficient balance",
 			zap.String("account", account.AccountNumber),
@@ -56,7 +78,7 @@ func (s *PaymentService) Payment(req dto.PaymentRequest) (string, error) {
 			zap.Float64("requested", req.Amount),
 		)
 
-		return "", errors.New("insufficient balance")
+		return "", err
 	}
 
 	account.Balance -= req.Amount
@@ -69,7 +91,7 @@ func (s *PaymentService) Payment(req dto.PaymentRequest) (string, error) {
 	)
 
 	trx := &model.Transaction{
-		TransactionID: fmt.Sprintf("PAY-%s", uuid.New().String()[:8]),
+		TransactionID: transactionID,
 		FromAccount:   account.AccountNumber,
 		Amount:        req.Amount,
 		Type:          "PAYMENT",
@@ -77,7 +99,9 @@ func (s *PaymentService) Payment(req dto.PaymentRequest) (string, error) {
 		Status:        "SUCCESS",
 	}
 
-	if err := s.repo.ExecutePayment(account, trx); err != nil {
+	if err := s.repo.ExecutePayment(ctx, account, trx); err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, "payment failed")
 		logger.Log.Error(
 			"payment failed",
 			zap.String("transactionId", trx.TransactionID),
@@ -95,6 +119,5 @@ func (s *PaymentService) Payment(req dto.PaymentRequest) (string, error) {
 		zap.Float64("amount", trx.Amount),
 		zap.String("status", trx.Status),
 	)
-
 	return trx.TransactionID, nil
 }

@@ -9,10 +9,15 @@ import (
 
 var Log *zap.Logger
 
-func New(loggerProvider log.LoggerProvider) *zap.Logger {
+func New(loggerProviders ...log.LoggerProvider) *zap.Logger {
 
 	if Log != nil {
 		return Log
+	}
+
+	var loggerProvider log.LoggerProvider
+	if len(loggerProviders) > 0 {
+		loggerProvider = loggerProviders[0]
 	}
 
 	l, err := zap.NewProduction()

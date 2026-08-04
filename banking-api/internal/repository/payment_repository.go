@@ -1,6 +1,8 @@
 package repository
 
 import (
+	"context"
+
 	"github.com/yudhabem/go-dynatrace-banking-demo/banking-api/internal/model"
 	"gorm.io/gorm"
 )
@@ -15,11 +17,11 @@ func NewPaymentRepository(db *gorm.DB) *PaymentRepository {
 	}
 }
 
-func (r *PaymentRepository) GetAccount(account string) (*model.Account, error) {
+func (r *PaymentRepository) GetAccount(ctx context.Context, account string) (*model.Account, error) {
 
 	var acc model.Account
 
-	err := r.db.
+	err := r.db.WithContext(ctx).
 		Where("account_number = ?", account).
 		First(&acc).Error
 
@@ -27,11 +29,12 @@ func (r *PaymentRepository) GetAccount(account string) (*model.Account, error) {
 }
 
 func (r *PaymentRepository) ExecutePayment(
+	ctx context.Context,
 	account *model.Account,
 	transaction *model.Transaction,
 ) error {
 
-	return r.db.Transaction(func(tx *gorm.DB) error {
+	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 
 		if err := tx.Save(account).Error; err != nil {
 			return err

@@ -31,7 +31,7 @@ func (h *TransferHandler) Transfer(c *gin.Context) {
 		return
 	}
 
-	transactionID, err := h.service.Transfer(req)
+	transactionID, err := h.service.Transfer(c.Request.Context(), req)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"success": false,
@@ -50,7 +50,7 @@ func (h *TransferHandler) Inquiry(c *gin.Context) {
 
 	account := c.Param("account")
 
-	acc, err := h.service.Inquiry(account)
+	acc, err := h.service.Inquiry(c.Request.Context(), account)
 
 	if err != nil {
 
@@ -70,7 +70,7 @@ func (h *TransferHandler) Inquiry(c *gin.Context) {
 
 func (h *TransferHandler) History(c *gin.Context) {
 
-	data, err := h.service.History()
+	data, err := h.service.History(c.Request.Context())
 
 	if err != nil {
 
