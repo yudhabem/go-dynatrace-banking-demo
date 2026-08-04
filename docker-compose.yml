@@ -40,12 +40,53 @@ services:
       DB_NAME: banking
       DB_SSLMODE: disable
 
+      OTEL_SERVICE_NAME: banking-api
+      OTEL_EXPORTER_OTLP_ENDPOINT: ${DT_OTLP_ENDPOINT}
+      OTEL_EXPORTER_OTLP_HEADERS: Authorization=Api-Token ${DT_API_TOKEN}
+      OTEL_EXPORTER_OTLP_PROTOCOL: http/protobuf
+
     ports:
       - "8080:8080"
 
     depends_on:
       postgres:
         condition: service_healthy
+
+  kong:
+    image: kong:3.9
+    container_name: kong-gateway
+
+    environment:
+      KONG_DATABASE: "off"
+      KONG_DECLARATIVE_CONFIG: /etc/kong/kong.yml
+      KONG_PROXY_ACCESS_LOG: /dev/stdout
+      KONG_PROXY_ERROR_LOG: /dev/stderr
+      KONG_ADMIN_ACCESS_LOG: /dev/stdout
+      KONG_ADMIN_ERROR_LOG: /dev/stderr
+
+    volumes:
+      - ./kong/kong.yml:/etc/kong/kong.yml:ro
+
+    ports:
+      - "8000:8000"
+      - "8001:8001"
+
+    depends_on:
+      - gateway
+
+  load-generator:
+    build:
+      context: .
+      dockerfile: load-generator/Dockerfile
+
+    environment:
+      API_BASE_URL: http://kong:8000
+      WORKER_COUNT: "100"
+      REQUEST_INTERVAL: 200ms
+      BOOTSTRAP_USERS: "10"
+
+    depends_on:
+      - kong
 
 volumes:
   postgres-data:

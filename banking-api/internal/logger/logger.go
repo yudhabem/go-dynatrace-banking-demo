@@ -1,8 +1,32 @@
 package logger
 
-import "go.uber.org/zap"
+import (
+	"go.opentelemetry.io/contrib/bridges/otelzap"
+	"go.opentelemetry.io/otel/log"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
+)
 
-func New() *zap.Logger {
-	logger, _ := zap.NewProduction()
-	return logger
+var Log *zap.Logger
+
+func New(loggerProvider log.LoggerProvider) *zap.Logger {
+
+	if Log != nil {
+		return Log
+	}
+
+	l, err := zap.NewProduction()
+	if err != nil {
+		panic(err)
+	}
+
+	if loggerProvider != nil {
+		l = l.WithOptions(zap.WrapCore(func(core zapcore.Core) zapcore.Core {
+			return zapcore.NewTee(core, otelzap.NewCore("banking-api", otelzap.WithLoggerProvider(loggerProvider)))
+		}))
+	}
+
+	Log = l
+
+	return Log
 }
