@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"log"
 
 	"github.com/yudhabem/go-dynatrace-banking-demo/banking-api/internal/config"
@@ -9,7 +8,6 @@ import (
 	"github.com/yudhabem/go-dynatrace-banking-demo/banking-api/internal/handler"
 	"github.com/yudhabem/go-dynatrace-banking-demo/banking-api/internal/logger"
 	"github.com/yudhabem/go-dynatrace-banking-demo/banking-api/internal/model"
-	"github.com/yudhabem/go-dynatrace-banking-demo/banking-api/internal/observability"
 	"github.com/yudhabem/go-dynatrace-banking-demo/banking-api/internal/repository"
 	"github.com/yudhabem/go-dynatrace-banking-demo/banking-api/internal/router"
 	"github.com/yudhabem/go-dynatrace-banking-demo/banking-api/internal/service"
@@ -19,13 +17,7 @@ func main() {
 
 	cfg := config.Load()
 
-	telemetry, err := observability.Init(context.Background())
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer telemetry.Shutdown(context.Background())
-
-	logg := logger.New(telemetry.LoggerProvider())
+	logg := logger.New()
 	defer logg.Sync()
 
 	db, err := database.Connect(cfg)
@@ -62,6 +54,8 @@ func main() {
 	paymentHandler := handler.NewPaymentHandler(paymentService)
 
 	r := router.New(
+		cfg,
+		db,
 		userHandler,
 		transferHandler,
 		paymentHandler,

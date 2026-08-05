@@ -1,16 +1,17 @@
-FROM golang:1.25 AS builder
+FROM golang:1.25
 
 WORKDIR /app
 
-COPY go.mod go.sum ./
+ENV GOPROXY=https://proxy.golang.org,direct
+ENV GOSUMDB=sum.golang.org
+
+COPY go.mod .
+COPY go.sum .
+
 RUN go mod download
 
-COPY load-generator ./load-generator
-RUN go build -o /load-generator ./load-generator/cmd
+COPY . .
 
-FROM gcr.io/distroless/base-debian12:nonroot
+RUN go build -o load-generator ./cmd
 
-COPY --from=builder /load-generator /load-generator
-
-USER nonroot:nonroot
-ENTRYPOINT ["/load-generator"]
+CMD ["./load-generator"]

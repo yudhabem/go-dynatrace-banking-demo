@@ -22,12 +22,12 @@ services:
       timeout: 5s
       retries: 5
 
-  gateway:
+  banking-api:
     build:
       context: .
       dockerfile: banking-api/Dockerfile
 
-    container_name: api-gateway
+    container_name: banking-api
 
     environment:
       APP_NAME: banking-api
@@ -40,10 +40,11 @@ services:
       DB_NAME: banking
       DB_SSLMODE: disable
 
-      OTEL_SERVICE_NAME: banking-api
-      OTEL_EXPORTER_OTLP_ENDPOINT: ${DT_OTLP_ENDPOINT}
-      OTEL_EXPORTER_OTLP_HEADERS: Authorization=Api-Token ${DT_API_TOKEN}
-      OTEL_EXPORTER_OTLP_PROTOCOL: http/protobuf
+      # Aktifkan nanti jika ingin memakai OTLP
+      # OTEL_SERVICE_NAME: banking-api
+      # OTEL_EXPORTER_OTLP_ENDPOINT: ${DT_OTLP_ENDPOINT}
+      # OTEL_EXPORTER_OTLP_HEADERS: Authorization=Api-Token ${DT_API_TOKEN}
+      # OTEL_EXPORTER_OTLP_PROTOCOL: http/protobuf
 
     ports:
       - "8080:8080"
@@ -51,6 +52,12 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/health > /dev/null || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   kong:
     image: kong:3.9
@@ -72,21 +79,22 @@ services:
       - "8001:8001"
 
     depends_on:
-      - gateway
+      banking-api:
+        condition: service_healthy
 
-  load-generator:
-    build:
-      context: .
-      dockerfile: load-generator/Dockerfile
+  # load-generator:
+  #   build:
+  #     context: ./load-generator
+  #     dockerfile: Dockerfile
 
-    environment:
-      API_BASE_URL: http://kong:8000
-      WORKER_COUNT: "100"
-      REQUEST_INTERVAL: 200ms
-      BOOTSTRAP_USERS: "10"
+  #   container_name: load-generator
 
-    depends_on:
-      - kong
+  #   env_file:
+  #     - ./load-generator/.env
+
+  #   depends_on:
+  #     banking-api:
+  #       condition: service_healthy
 
 volumes:
   postgres-data:
