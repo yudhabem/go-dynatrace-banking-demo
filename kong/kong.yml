@@ -3,7 +3,7 @@ _transform: true
 
 services:
   - name: banking-api
-    url: http://gateway:8080
+    url: http://banking-api:8080
     routes:
       - name: banking-api-route
         paths:

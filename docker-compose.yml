@@ -2,7 +2,6 @@ services:
 
   postgres:
     image: postgres:17
-    container_name: banking-postgres
 
     environment:
       POSTGRES_USER: banking
@@ -26,8 +25,6 @@ services:
     build:
       context: .
       dockerfile: banking-api/Dockerfile
-
-    container_name: banking-api
 
     environment:
       APP_NAME: banking-api
@@ -61,11 +58,11 @@ services:
 
   kong:
     image: kong:3.9
-    container_name: kong-gateway
 
     environment:
       KONG_DATABASE: "off"
       KONG_DECLARATIVE_CONFIG: /etc/kong/kong.yml
+      DT_NGINX_FORCE_RUNTIME_INSTRUMENTATION: "on"
       KONG_PROXY_ACCESS_LOG: /dev/stdout
       KONG_PROXY_ERROR_LOG: /dev/stderr
       KONG_ADMIN_ACCESS_LOG: /dev/stdout

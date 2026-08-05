@@ -1,6 +1,8 @@
 package logger
 
-import "go.uber.org/zap"
+import (
+	"go.uber.org/zap"
+)
 
 var Log *zap.Logger
 
@@ -16,5 +18,6 @@ func New() *zap.Logger {
 	}
 
 	Log = l
+
 	return Log
 }

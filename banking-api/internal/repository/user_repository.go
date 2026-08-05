@@ -23,6 +23,17 @@ func (r *UserRepository) CreateAccount(account *model.Account) error {
 	return r.db.Create(account).Error
 }
 
+func (r *UserRepository) CountAccounts() (int64, error) {
+
+	var count int64
+
+	err := r.db.
+		Model(&model.Account{}).
+		Count(&count).Error
+
+	return count, err
+}
+
 func (r *UserRepository) GetCustomers() ([]model.Customer, error) {
 
 	var customers []model.Customer
