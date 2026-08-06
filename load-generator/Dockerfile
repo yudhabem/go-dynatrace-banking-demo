@@ -1,16 +1,10 @@
-FROM golang:1.25
+FROM golang:1.25-alpine
 
 WORKDIR /app
 
-ENV GOPROXY=https://proxy.golang.org,direct
-ENV GOSUMDB=sum.golang.org
-
-COPY go.mod .
-COPY go.sum .
+COPY . .
 
 RUN go mod download
-
-COPY . .
 
 RUN go build -o load-generator ./cmd
 
